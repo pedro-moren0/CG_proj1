@@ -6,6 +6,29 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+void OpenGLWindow::handleEvent(SDL_Event &event) {
+  // Keyboard events
+  if (event.type == SDL_KEYDOWN) {
+    if (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_w)
+      m_gameData.m_input.set(static_cast<size_t>(Input::Up));
+    if (event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_s)
+      m_gameData.m_input.set(static_cast<size_t>(Input::Down));
+    if (event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_a)
+      m_gameData.m_input.set(static_cast<size_t>(Input::Left));
+    if (event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_d)
+      m_gameData.m_input.set(static_cast<size_t>(Input::Right));
+  }
+  if (event.type == SDL_KEYUP) {
+    if (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_w)
+      m_gameData.m_input.reset(static_cast<size_t>(Input::Up));
+    if (event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_s)
+      m_gameData.m_input.reset(static_cast<size_t>(Input::Down));
+    if (event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_a)
+      m_gameData.m_input.reset(static_cast<size_t>(Input::Left));
+    if (event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_d)
+      m_gameData.m_input.reset(static_cast<size_t>(Input::Right));
+    }
+}
 
 void OpenGLWindow::initializeGL() {
     const auto *vertexShader{R"gl(
@@ -14,10 +37,14 @@ void OpenGLWindow::initializeGL() {
         layout(location = 0) in vec2 inPosition;
         layout(location = 1) in vec4 inColor;
 
+        uniform vec2 translation;
+        uniform float scale;
+
         out vec4 fragColor;
 
         void main() {
-            gl_Position = vec4(inPosition, 0, 1);
+            vec2 newPosition = inPosition * scale + translation;
+            gl_Position = vec4(newPosition, 0, 1);
             fragColor = inColor;
         }
     )gl"};
@@ -36,15 +63,41 @@ void OpenGLWindow::initializeGL() {
 
     m_program = createProgramFromString(vertexShader, fragmentShader);
 
+    m_translationLoc = abcg::glGetUniformLocation(m_program, "translation");
+    m_scaleLoc = abcg::glGetUniformLocation(m_program, "scale");
+
     abcg::glClearColor(0, 0, 0, 1);
     abcg::glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void OpenGLWindow::paintGL() {
+    abcg::glClear(GL_COLOR_BUFFER_BIT);
+    const float deltaTime{static_cast<float>(getDeltaTime())};
     setupModel();
 
     abcg::glViewport(0, 0, m_viewportWidth, m_viewportHeight);
     abcg::glUseProgram(m_program);
+
+    //Movement
+    if (m_gameData.m_input[static_cast<size_t>(Input::Up)]) {
+        m_translation += glm::vec2(0, deltaTime);
+        abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
+    }
+    if (m_gameData.m_input[static_cast<size_t>(Input::Down)]) {
+        m_translation += glm::vec2(0, -deltaTime);
+        abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
+    }
+    if (m_gameData.m_input[static_cast<size_t>(Input::Left)]) {
+        m_translation += glm::vec2(-deltaTime, 0);
+        abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
+    }
+    if (m_gameData.m_input[static_cast<size_t>(Input::Right)]) {
+        m_translation += glm::vec2(deltaTime, 0);
+        abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
+    }
+
+    // Scale
+    abcg::glUniform1f(m_scaleLoc, m_scale);
 
     // Render
     abcg::glBindVertexArray(m_vao);
@@ -52,6 +105,7 @@ void OpenGLWindow::paintGL() {
     abcg::glBindVertexArray(0);
 
     abcg::glUseProgram(0);
+
 }
 
 void OpenGLWindow::paintUI() {
@@ -90,6 +144,7 @@ void OpenGLWindow::setupModel() {
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
     };
+
 
     //Gen position VBO
     abcg::glGenBuffers(1, &m_vboPositions);
