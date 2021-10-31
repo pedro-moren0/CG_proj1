@@ -12,6 +12,7 @@ void Ship::initializeGL(GLuint program){
     terminateGL();
 
     m_program = program;
+    m_startPositionLoc = abcg::glGetUniformLocation(m_program, "startPosition");
     m_translationLoc = abcg::glGetUniformLocation(m_program, "translation");
     m_scaleLoc = abcg::glGetUniformLocation(m_program, "scale");
 
@@ -39,31 +40,32 @@ void Ship::initializeGL(GLuint program){
     };
 
     std::vector<glm::vec4> colors {
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
 
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
 
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f)
     };
 
-    // Get the min e max values of x and y
+    std::vector<glm::vec4> lineColors{};
+
     float xMax {-10.0f};
     float xMin { 10.0f};
-    float yMax {-10.0f};
-    float yMin { 10.0f};
 
+    // Get the min e max values of x and save them as a ship attribute
+    // At the same time populate lineColors with vec4(black)
     for (glm::vec2 member : positions) {
         if (member.x < xMin) {
             xMin = member.x;
@@ -71,19 +73,11 @@ void Ship::initializeGL(GLuint program){
         if (member.x > xMax) {
             xMax = member.x;
         }
-        if (member.y < yMin) {
-            yMin = member.y;
-        }
-        if (member.y > yMax) {
-            yMax = member.y;
-        }
+        lineColors.emplace_back(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
     }
-    m_minXYpos = glm::vec2(xMin, yMin);
-    m_maxXYpos = glm::vec2(xMax, yMax);
 
-    fmt::print(
-        "m_minXYpos = ({}, {}), m_maxXYpos = ({}, {})\n",
-        m_minXYpos.x, m_minXYpos.y, m_maxXYpos.x, m_maxXYpos.y);
+    m_minXpos = xMin;
+    m_maxXpos = xMax;
 
     std::vector<unsigned int> indices{
         0, 1, 2,
@@ -95,9 +89,18 @@ void Ship::initializeGL(GLuint program){
         1, 8, 9,
         5, 7, 9,
 
-        10, 11, 3,
-        3, 13, 14,
+        10, 11,  3,
+         3, 13, 14,
         10, 14, 12
+    };
+    std::vector<unsigned int> lineIndices{
+         0,  1,  2,  0,
+         1,  4,  3,  2,
+         0,  3, 10, 14, 13,
+        14, 12, 10, 11,
+         0,
+         6,  5,  7,  9,
+         8,  1,  5,  9
     };
 
     //Gen position VBO
@@ -109,21 +112,39 @@ void Ship::initializeGL(GLuint program){
                         GL_STATIC_DRAW);
     abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    //Gen color VBO
-    abcg::glGenBuffers(1, &m_vboColors);
-    abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboColors);
+    //Gen body color VBO
+    abcg::glGenBuffers(1, &m_vboBodyColors);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboBodyColors);
     abcg::glBufferData(GL_ARRAY_BUFFER,
                         colors.size() * sizeof(glm::vec4),
                         colors.data(),
                         GL_STATIC_DRAW);
     abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // Generate EBO
-    abcg::glGenBuffers(1, &m_ebo);
-    abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+    //Gen line color VBO
+    abcg::glGenBuffers(1, &m_vboLinesColors);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboLinesColors);
+    abcg::glBufferData(GL_ARRAY_BUFFER,
+                        lineColors.size() * sizeof(glm::vec4),
+                        lineColors.data(),
+                        GL_STATIC_DRAW);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Generate body EBO
+    abcg::glGenBuffers(1, &m_eboBody);
+    abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_eboBody);
     abcg::glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                         indices.size() * sizeof(unsigned int),
                         indices.data(),
+                       GL_STATIC_DRAW);
+    abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Generate line EBO
+    abcg::glGenBuffers(1, &m_eboLines);
+    abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_eboLines);
+    abcg::glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                        lineIndices.size() * sizeof(unsigned int),
+                        lineIndices.data(),
                        GL_STATIC_DRAW);
     abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -134,10 +155,10 @@ void Ship::initializeGL(GLuint program){
         abcg::glGetAttribLocation(m_program, "inColor")
     };
 
-    // Gen VAO
-    abcg::glGenVertexArrays(1, &m_vao);
+    // Gen body VAO
+    abcg::glGenVertexArrays(1, &m_vaoBody);
 
-    abcg::glBindVertexArray(m_vao);
+    abcg::glBindVertexArray(m_vaoBody);
 
     abcg::glEnableVertexAttribArray(positionAttribute);
     abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboPositions);
@@ -146,12 +167,33 @@ void Ship::initializeGL(GLuint program){
     abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     abcg::glEnableVertexAttribArray(colorAttribute);
-    abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboColors);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboBodyColors);
     abcg::glVertexAttribPointer(
         colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
     abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+    abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_eboBody);
+
+    abcg::glBindVertexArray(0);
+
+    // Gen lines VAO
+    abcg::glGenVertexArrays(1, &m_vaoLines);
+
+    abcg::glBindVertexArray(m_vaoLines);
+
+    abcg::glEnableVertexAttribArray(positionAttribute);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboPositions);
+    abcg::glVertexAttribPointer(
+        positionAttribute, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    abcg::glEnableVertexAttribArray(colorAttribute);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, m_vboLinesColors);
+    abcg::glVertexAttribPointer(
+        colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+    abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_eboLines);
 
     abcg::glBindVertexArray(0);
 }
@@ -159,24 +201,17 @@ void Ship::initializeGL(GLuint program){
 void Ship::paintGL(const GameData &gameData, float deltaTime){
     abcg::glUseProgram(m_program);
 
-    //Movement
-    if (gameData.m_input[static_cast<size_t>(Input::Up)]
-        && (m_maxXYpos.y * m_scale + m_translation.y) <= 1.0f) {
-            m_translation += glm::vec2(0, deltaTime);
-            abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
-    }
-    if (gameData.m_input[static_cast<size_t>(Input::Down)]
-        && (m_minXYpos.y * m_scale + m_translation.y) >= -1.0f) {
-            m_translation += glm::vec2(0, -deltaTime);
-            abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
-    }
+    // Star Position
+    abcg::glUniform2fv(m_startPositionLoc, 1, &m_startPosition.x);
+
+    // Traslation
     if (gameData.m_input[static_cast<size_t>(Input::Left)]
-        && (m_minXYpos.x * m_scale + m_translation.x) >= -1.0f) {
+        && (m_minXpos * m_scale + m_translation.x) >= -1.0f) {
             m_translation += glm::vec2(-deltaTime, 0);
             abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
     }
     if (gameData.m_input[static_cast<size_t>(Input::Right)]
-        && (m_maxXYpos.x * m_scale + m_translation.x) <= 1.0f) {
+        && (m_maxXpos * m_scale + m_translation.x) <= 1.0f) {
             m_translation += glm::vec2(deltaTime, 0);
             abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
     }
@@ -185,9 +220,13 @@ void Ship::paintGL(const GameData &gameData, float deltaTime){
     abcg::glUniform1f(m_scaleLoc, m_scale);
 
     // Render
-    abcg::glBindVertexArray(m_vao);
-    abcg::glDrawElements(GL_TRIANGLES, 12 * 3, GL_UNSIGNED_INT, nullptr);
+    abcg::glBindVertexArray(m_vaoBody);
+    abcg::glDrawElements(GL_TRIANGLES, 10 * 3, GL_UNSIGNED_INT, nullptr);
     // abcg::glDrawArrays(GL_TRIANGLES, 0, 3);
+    abcg::glBindVertexArray(0);
+
+    abcg::glBindVertexArray(m_vaoLines);
+    abcg::glDrawElements(GL_LINE_STRIP, (6 * 4) + 2, GL_UNSIGNED_INT, nullptr);
     abcg::glBindVertexArray(0);
 
     abcg::glUseProgram(0);
@@ -196,7 +235,10 @@ void Ship::paintGL(const GameData &gameData, float deltaTime){
 void Ship::terminateGL(){
     abcg::glDeleteProgram(m_program);
     abcg::glDeleteBuffers(1, &m_vboPositions);
-    abcg::glDeleteBuffers(1, &m_vboColors);
-    abcg::glDeleteBuffers(1, &m_ebo);
-    abcg::glDeleteVertexArrays(1, &m_vao);
+    abcg::glDeleteBuffers(1, &m_vboBodyColors);
+    abcg::glDeleteBuffers(1, &m_vboLinesColors);
+    abcg::glDeleteBuffers(1, &m_eboBody);
+    abcg::glDeleteBuffers(1, &m_eboLines);
+    abcg::glDeleteVertexArrays(1, &m_vaoBody);
+    abcg::glDeleteVertexArrays(1, &m_vaoLines);
 }
