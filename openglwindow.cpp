@@ -35,7 +35,13 @@ void OpenGLWindow::initializeGL() {
             getAssetsPath() + "ship.frag"
         )
     );
-    abcg::glClearColor(0, 0, 0, 1);
+    m_crab.initializeGL(
+        createProgramFromFile(
+            getAssetsPath() + "ship.vert",
+            getAssetsPath() + "ship.frag"
+        )
+    );
+    abcg::glClearColor(0.2, 0.2, 0.2, 1);
     abcg::glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -47,6 +53,7 @@ void OpenGLWindow::paintGL() {
     abcg::glViewport(0, 0, m_viewportWidth, m_viewportHeight);
 
     m_ship.paintGL(m_gameData, deltaTime);
+    m_crab.paintGL();
 
 }
 
@@ -62,5 +69,6 @@ void OpenGLWindow::resizeGL(int width, int height) {
 }
 
 void OpenGLWindow::terminateGL() {
+    m_crab.terminateGL();
     m_ship.terminateGL();
 }

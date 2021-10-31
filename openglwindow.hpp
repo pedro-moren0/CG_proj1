@@ -6,6 +6,7 @@
 #include "abcg.hpp"
 #include "gamedata.hpp"
 #include "ship.hpp"
+#include "crab.hpp"
 
 class OpenGLWindow : public abcg::OpenGLWindow {
     protected:
@@ -22,6 +23,7 @@ class OpenGLWindow : public abcg::OpenGLWindow {
 
         GameData m_gameData;
         Ship m_ship;
+        Crab m_crab;
 };
 
 #endif
