@@ -29,7 +29,7 @@ class Crab {
 
         glm::vec2 m_startPosition{glm::vec2(0)};
         glm::vec2 m_translation{glm::vec2(0)};
-        float m_scale{1.0f/*0.125f*/};
+        float m_scale{0.125f};
 };
 
 #endif

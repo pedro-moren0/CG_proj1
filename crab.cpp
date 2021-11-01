@@ -120,14 +120,15 @@ void Crab::initializeGL(GLuint program){
     };
 
     std::vector<unsigned int> lineIndices{
-        1, 10, 11, 1, 2, 13,
-        12, 2, 3, 4, 18, 17,
-        16, 15, 17, 14, 4, 19,
-        20, 21, 22, 20, 22, 5,
-        19, 5, 6, 7, 26, 25,
-        24, 26, 24, 23, 7, 8,
-        31, 30, 29, 28, 30, 27,
-        8, 9, 1
+         1, 10, 11,  1,  2, 13,
+        12,  2,  3,  4, 18, 17,
+        16, 15, 17, 14,  4, 19,
+        20, 21, 22, 20, 22,  5,
+        19,  5,  0,  6,  0,  6,
+         7,  0,  7, 26, 25, 24,
+        26, 24, 23,  7,  8, 31,
+        30, 29, 28, 30, 27,  8,
+        9,  1
     };
 
     //Gen position VBO
@@ -253,7 +254,7 @@ void Crab::paintGL(){
     abcg::glBindVertexArray(0);
 
     abcg::glBindVertexArray(m_vaoLines);
-    abcg::glDrawElements(GL_LINE_STRIP, (6 * 7) + 3, GL_UNSIGNED_INT, nullptr);
+    abcg::glDrawElements(GL_LINE_STRIP, (6 * 8) + 2, GL_UNSIGNED_INT, nullptr);
     abcg::glBindVertexArray(0);
 
     abcg::glUseProgram(0);
@@ -263,9 +264,9 @@ void Crab::terminateGL(){
     abcg::glDeleteProgram(m_program);
     abcg::glDeleteBuffers(1, &m_vboPositions);
     abcg::glDeleteBuffers(1, &m_vboBodyColors);
-    // abcg::glDeleteBuffers(1, &m_vboLinesColors);
+    abcg::glDeleteBuffers(1, &m_vboLinesColors);
     abcg::glDeleteBuffers(1, &m_eboBody);
-    // abcg::glDeleteBuffers(1, &m_eboLines);
+    abcg::glDeleteBuffers(1, &m_eboLines);
     abcg::glDeleteVertexArrays(1, &m_vaoBody);
-    // abcg::glDeleteVertexArrays(1, &m_vaoLines);
+    abcg::glDeleteVertexArrays(1, &m_vaoLines);
 }

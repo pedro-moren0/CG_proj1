@@ -6,6 +6,8 @@
 void OpenGLWindow::handleEvent(SDL_Event &event) {
   // Keyboard events
   if (event.type == SDL_KEYDOWN) {
+    if (event.key.keysym.sym == SDLK_SPACE)
+      m_gameData.m_input.set(static_cast<size_t>(Input::Fire));
     if (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_w)
       m_gameData.m_input.set(static_cast<size_t>(Input::Up));
     if (event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_s)
@@ -16,6 +18,8 @@ void OpenGLWindow::handleEvent(SDL_Event &event) {
       m_gameData.m_input.set(static_cast<size_t>(Input::Right));
   }
   if (event.type == SDL_KEYUP) {
+    if (event.key.keysym.sym == SDLK_SPACE)
+      m_gameData.m_input.reset(static_cast<size_t>(Input::Fire));
     if (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_w)
       m_gameData.m_input.reset(static_cast<size_t>(Input::Up));
     if (event.key.keysym.sym == SDLK_DOWN || event.key.keysym.sym == SDLK_s)
@@ -24,7 +28,7 @@ void OpenGLWindow::handleEvent(SDL_Event &event) {
       m_gameData.m_input.reset(static_cast<size_t>(Input::Left));
     if (event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_d)
       m_gameData.m_input.reset(static_cast<size_t>(Input::Right));
-    }
+  }
 }
 
 void OpenGLWindow::initializeGL() {
@@ -35,12 +39,20 @@ void OpenGLWindow::initializeGL() {
             getAssetsPath() + "ship.frag"
         )
     );
+    m_ship.m_bullet.initializeGL(
+        createProgramFromFile(
+            getAssetsPath() + "bullet.vert",
+            getAssetsPath() + "bullet.frag"
+        ),
+        m_ship.m_maxXYpos.y * m_ship.m_scale + m_ship.m_startPosition.y
+    );
     m_crab.initializeGL(
         createProgramFromFile(
             getAssetsPath() + "ship.vert",
             getAssetsPath() + "ship.frag"
         )
     );
+
     abcg::glClearColor(0.2, 0.2, 0.2, 1);
     abcg::glClear(GL_COLOR_BUFFER_BIT);
 }

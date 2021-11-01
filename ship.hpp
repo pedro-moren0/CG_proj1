@@ -3,6 +3,7 @@
 
 #include "abcg.hpp"
 #include "gamedata.hpp"
+#include "bullet.hpp"
 
 #include <vector>
 
@@ -27,17 +28,23 @@ class Ship {
         GLuint m_eboLines{};
         GLuint m_vaoLines{};
 
+        //uniform locations
         GLint m_startPositionLoc{};
         GLint m_translationLoc{};
         GLint m_scaleLoc{};
 
+        //uniform values
         glm::vec2 m_startPosition{glm::vec2(0.0f, -0.95f)};
         glm::vec2 m_translation{glm::vec2(0)};
         float m_scale{0.125f};
 
-        float m_minXpos {};
-        float m_maxXpos {};
+        //useful
+        glm::vec2 m_minXYpos {};
+        glm::vec2 m_maxXYpos {};
 
+        Bullet m_bullet;
+        bool m_spacebarStatus {};
+        // BulletState m_bulletState;
 };
 
 #endif

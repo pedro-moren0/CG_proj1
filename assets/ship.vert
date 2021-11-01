@@ -11,10 +11,6 @@ out vec4 fragColor;
 
 void main() {
     vec2 newPosition = (inPosition * scale) + translation + startPosition;
-    if (newPosition.x < -1.0f) {
-        gl_Position = vec4(newPosition, 0, 1);
-    } else {
-        gl_Position = vec4(newPosition, 0, 1);
-    }
+    gl_Position = vec4(newPosition, 0, 1);
     fragColor = inColor;
 }

@@ -63,6 +63,8 @@ void Ship::initializeGL(GLuint program){
 
     float xMax {-10.0f};
     float xMin { 10.0f};
+    float yMax {-10.0f};
+    float yMin { 10.0f};
 
     // Get the min e max values of x and save them as a ship attribute
     // At the same time populate lineColors with vec4(black)
@@ -73,11 +75,17 @@ void Ship::initializeGL(GLuint program){
         if (member.x > xMax) {
             xMax = member.x;
         }
+        if (member.y < yMin) {
+            yMin = member.y;
+        }
+        if (member.y > yMax) {
+            yMax = member.y;
+        }
         lineColors.emplace_back(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
     }
 
-    m_minXpos = xMin;
-    m_maxXpos = xMax;
+    m_minXYpos = glm::vec2(xMin, yMin);
+    m_maxXYpos = glm::vec2(xMax, yMax);
 
     std::vector<unsigned int> indices{
         0, 1, 2,
@@ -206,12 +214,12 @@ void Ship::paintGL(const GameData &gameData, float deltaTime){
 
     // Traslation
     if (gameData.m_input[static_cast<size_t>(Input::Left)]
-        && (m_minXpos * m_scale + m_translation.x) >= -1.0f) {
+        && (m_minXYpos.x * m_scale + m_translation.x) >= -1.0f) {
             m_translation += glm::vec2(-deltaTime, 0);
             abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
     }
     if (gameData.m_input[static_cast<size_t>(Input::Right)]
-        && (m_maxXpos * m_scale + m_translation.x) <= 1.0f) {
+        && (m_maxXYpos.x * m_scale + m_translation.x) <= 1.0f) {
             m_translation += glm::vec2(deltaTime, 0);
             abcg::glUniform2fv(m_translationLoc, 1, &m_translation.x);
     }
@@ -222,7 +230,6 @@ void Ship::paintGL(const GameData &gameData, float deltaTime){
     // Render
     abcg::glBindVertexArray(m_vaoBody);
     abcg::glDrawElements(GL_TRIANGLES, 10 * 3, GL_UNSIGNED_INT, nullptr);
-    // abcg::glDrawArrays(GL_TRIANGLES, 0, 3);
     abcg::glBindVertexArray(0);
 
     abcg::glBindVertexArray(m_vaoLines);
@@ -230,6 +237,21 @@ void Ship::paintGL(const GameData &gameData, float deltaTime){
     abcg::glBindVertexArray(0);
 
     abcg::glUseProgram(0);
+
+    // Shoot
+    // if (gameData.m_input[static_cast<size_t>(Input::Fire)]
+    //     && !m_bulletState.wasSpacebarPressed)
+    // {
+    //     m_bulletState.addToQueue(m_bulletState, m_translation);
+    // }
+
+    m_spacebarStatus = gameData.m_input[static_cast<size_t>(Input::Fire)];
+    m_bullet.paintGL(
+        m_translation, //Horizontal only
+        deltaTime,
+        m_spacebarStatus
+    );
+    m_spacebarStatus = false;
 }
 
 void Ship::terminateGL(){
