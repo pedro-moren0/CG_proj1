@@ -1,5 +1,7 @@
 # Projeto 1 - Computação Gráfica
 
+[Link para o Github pages com a aplicação](https://pedro-moren0.github.io/CG_proj1/proj1/)
+
 ## Introdução
 
 O objetivo desse trabalho era a realização de uma aplicação interativa envolvendo os conceitos de computação gráfica e as ferramentas do OpenGL. Em primeiro momento, pensou-se em realizar um clone do jogo de Atari Space Invaders. Tal motivação norteou todo o desenvolvimento do jogo e escolha de design.
